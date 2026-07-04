@@ -163,6 +163,7 @@
   .quiz-choices button.correct { background: #eaf7ea; border-color: #5cb85c; color: #2e7d32; }
   .quiz-choices button.wrong { background: #fdecea; border-color: #d9534f; color: #c62828; }
   .quiz-choices button:disabled { cursor: default; }
+  .quiz-result-date { font-size: 13px; color: #888; margin-bottom: 8px; }
 
   form.add-form input, form.add-form select {
     width: 100%;
@@ -487,6 +488,11 @@ function todayStr() {
   return new Date().toISOString().slice(0,10);
 }
 
+function formatDateJP(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return y + "年" + m + "月" + d + "日";
+}
+
 function loadTodayLog() {
   const raw = localStorage.getItem(TODAY_LOG_KEY);
   const log = raw ? JSON.parse(raw) : null;
@@ -621,6 +627,7 @@ document.getElementById("start-btn").addEventListener("click", () => {
     return;
   }
   document.getElementById("done-area").style.display = "none";
+  document.getElementById("today-section").style.display = "none";
   document.getElementById("study-area").style.display = "block";
   document.getElementById("start-btn").style.display = "none";
   showNextCard();
@@ -681,7 +688,8 @@ document.getElementById("quiz-next-btn").addEventListener("click", () => {
   if (quizIndex >= quizQuestions.length) {
     document.getElementById("quiz-area").style.display = "none";
     const resultEl = document.getElementById("quiz-result");
-    resultEl.innerHTML = quizQuestions.length + "問中 <b>" + quizScore + "問</b> 正解でした！<br><br>";
+    resultEl.innerHTML = "<div class='quiz-result-date'>" + formatDateJP(todayStr()) + "</div>" +
+      quizQuestions.length + "問中 <b>" + quizScore + "問</b> 正解でした！<br><br>";
     const backBtn = document.createElement("button");
     backBtn.className = "primary-btn";
     backBtn.textContent = "戻る";
@@ -721,6 +729,7 @@ document.getElementById("repeat-btn").addEventListener("click", () => {
   practiceMode = true;
   document.getElementById("practice-banner").style.display = "block";
   document.getElementById("done-area").style.display = "none";
+  document.getElementById("today-section").style.display = "none";
   document.getElementById("study-area").style.display = "block";
   document.getElementById("start-btn").style.display = "none";
   showNextCard();
