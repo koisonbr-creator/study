@@ -262,6 +262,9 @@ const DIAGRAMS = {
   from: () => svgWrap(box(20,100,80,70) + arrow(105,135,270,135)),
   at: () => svgWrap(pin(150,150) + `<ellipse cx="150" cy="185" rx="20" ry="5" fill="#ccc"/>`),
 
+  "at-time": () => svgWrap(timeline() + timeDot(150,'#d9534f') + timeLabel(150,150,"7時")),
+  "on-time": () => svgWrap(timeline() + `<rect x="120" y="100" width="60" height="40" fill="#eef3fb" stroke="#2b5fad" stroke-width="2" rx="6"/>` + timeLabel(150,160,"月曜日")),
+  "in-time": () => svgWrap(timeline() + `<rect x="60" y="95" width="180" height="50" fill="#eef3fb" stroke="#2b5fad" stroke-width="2" rx="8"/>` + timeLabel(150,175,"1月")),
   since: () => svgWrap(timeline() + `<line x1="90" y1="120" x2="250" y2="120" stroke="#2b5fad" stroke-width="6" marker-end="url(#arrow)"/>` + timeDot(90) + timeLabel(90,150,"2020年") + timeLabel(250,150,"今")),
   until: () => svgWrap(timeline() + `<line x1="50" y1="120" x2="210" y2="120" stroke="#2b5fad" stroke-width="6"/>` + `<line x1="210" y1="95" x2="210" y2="145" stroke="#d9534f" stroke-width="4"/>` + timeLabel(210,170,"5時")),
   during: () => svgWrap(timeline() + `<rect x="90" y="100" width="90" height="40" fill="#eef3fb" stroke="#2b5fad" stroke-width="2" rx="6"/>` + timeLabel(135,170,"夏休み")),
@@ -307,6 +310,9 @@ const PREPOSITIONS = [
   { word: "from", meaning: "〜から（出発点）", example: "He came from Japan.", exampleJa: "彼は日本から来た。", category: "space" },
   { word: "at", meaning: "ある一点に（特定の点）", example: "I'll meet you at the station.", exampleJa: "駅で会いましょう。", category: "space" },
 
+  { word: "at", id: "at-time", meaning: "時刻を一点で指す（コアイメージ「点」がそのまま時間にも）", example: "The train leaves at 7 o'clock.", exampleJa: "電車は7時に出発する。", category: "time" },
+  { word: "on", id: "on-time", meaning: "特定の日を指す（コアイメージ「面」の応用）", example: "We have a test on Monday.", exampleJa: "月曜日にテストがある。", category: "time" },
+  { word: "in", id: "in-time", meaning: "月・季節・年など大きな期間（コアイメージ「枠の中」の応用）", example: "It often snows in January.", exampleJa: "1月にはよく雪が降る。", category: "time" },
   { word: "since", meaning: "〜以来ずっと（起点、現在完了とセット）", example: "I have lived here since 2020.", exampleJa: "私は2020年からずっとここに住んでいる。", category: "time" },
   { word: "until", meaning: "〜までずっと（継続、終点）", example: "She waited until 5 o'clock.", exampleJa: "彼女は5時までずっと待った。", category: "time" },
   { word: "during", meaning: "〜の間に（特定の期間内に）", example: "We went swimming during the summer vacation.", exampleJa: "私たちは夏休みの間に泳ぎに行った。", category: "time" },
@@ -337,7 +343,7 @@ function renderStudy() {
   const list = filteredPreps();
   const p = list[studyIndex];
   document.getElementById("study-progress").textContent = (studyIndex + 1) + " / " + list.length;
-  document.getElementById("study-diagram").innerHTML = DIAGRAMS[p.word]();
+  document.getElementById("study-diagram").innerHTML = DIAGRAMS[p.id || p.word]();
   document.getElementById("study-word").textContent = p.word;
   document.getElementById("study-meaning").textContent = p.meaning;
   document.getElementById("study-example").innerHTML = p.example + "<br><span class='ja'>" + p.exampleJa + "</span>";
@@ -426,7 +432,7 @@ function blankSentence(word, sentence) {
 function showQuizQuestion() {
   const p = quizOrder[quizIndex];
   document.getElementById("quiz-progress").textContent = (quizIndex + 1) + " / " + quizOrder.length + "問";
-  document.getElementById("quiz-diagram").innerHTML = DIAGRAMS[p.word]();
+  document.getElementById("quiz-diagram").innerHTML = DIAGRAMS[p.id || p.word]();
   document.getElementById("quiz-sentence").textContent = blankSentence(p.word, p.example);
   document.getElementById("quiz-next-btn").style.display = "none";
   const distractors = shuffle(filteredPreps().filter(o => o.word !== p.word)).slice(0, 3);
