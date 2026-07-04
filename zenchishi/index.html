@@ -157,6 +157,7 @@
   <div id="tab-quiz" class="tab">
     <div class="progress" id="quiz-progress"></div>
     <div class="diagram-card" id="quiz-diagram"></div>
+    <div class="prep-example" id="quiz-sentence"></div>
     <div class="quiz-choices" id="quiz-choices"></div>
     <button class="primary-btn" id="quiz-next-btn" style="display:none;">次へ</button>
     <div id="quiz-result" class="done-message" style="display:none;"></div>
@@ -312,14 +313,22 @@ function startQuiz() {
   document.getElementById("quiz-result").style.display = "none";
   document.getElementById("quiz-restart-btn").style.display = "none";
   document.getElementById("quiz-diagram").style.display = "block";
+  document.getElementById("quiz-sentence").style.display = "block";
   document.getElementById("quiz-choices").style.display = "flex";
   showQuizQuestion();
+}
+
+function blankSentence(word, sentence) {
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp("\\b" + escaped + "\\b");
+  return sentence.replace(re, "( ? )");
 }
 
 function showQuizQuestion() {
   const p = quizOrder[quizIndex];
   document.getElementById("quiz-progress").textContent = (quizIndex + 1) + " / " + quizOrder.length + "問";
   document.getElementById("quiz-diagram").innerHTML = DIAGRAMS[p.word]();
+  document.getElementById("quiz-sentence").textContent = blankSentence(p.word, p.example);
   document.getElementById("quiz-next-btn").style.display = "none";
   const distractors = shuffle(PREPOSITIONS.filter(o => o.word !== p.word)).slice(0, 3);
   const choices = shuffle([p, ...distractors]);
@@ -350,6 +359,7 @@ document.getElementById("quiz-next-btn").addEventListener("click", () => {
   quizIndex++;
   if (quizIndex >= quizOrder.length) {
     document.getElementById("quiz-diagram").style.display = "none";
+    document.getElementById("quiz-sentence").style.display = "none";
     document.getElementById("quiz-choices").style.display = "none";
     document.getElementById("quiz-next-btn").style.display = "none";
     const resultEl = document.getElementById("quiz-result");
