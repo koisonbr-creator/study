@@ -119,6 +119,35 @@
     font-size: 16px;
   }
 
+  .practice-banner {
+    background: #fff7e6;
+    color: #b8860b;
+    font-size: 12px;
+    padding: 8px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  #today-section {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 16px;
+  }
+  .today-list-title {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+  }
+  .today-word {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 14px;
+  }
+  .today-word .en { font-weight: bold; }
+  .today-word .ja { color: #666; }
+
   form.add-form input, form.add-form select {
     width: 100%;
     padding: 10px;
@@ -170,6 +199,7 @@
     <button class="primary-btn" id="start-btn">学習を開始する</button>
 
     <div id="study-area" style="display:none;">
+      <div id="practice-banner" class="practice-banner" style="display:none;">復習モード：ここでの評価は記録に反映されません</div>
       <div class="card" id="flash-card">
         <div class="word" id="card-word"></div>
         <div class="meaning" id="card-meaning" style="display:none;"></div>
@@ -185,6 +215,12 @@
     </div>
     <div id="done-area" class="done-message" style="display:none;">
       今日の学習分は終わりです。おつかれさまでした！
+    </div>
+
+    <div id="today-section" style="display:none;">
+      <div class="today-list-title">本日学習した単語（<span id="today-count">0</span>語）</div>
+      <div id="today-list"></div>
+      <button class="primary-btn" id="repeat-btn">同じ単語をもう一度復習する</button>
     </div>
   </div>
 
@@ -414,12 +450,44 @@ const PRESET_WORDS = [
 ];
 
 const STORAGE_KEY = "eitangoCards";
+const TODAY_LOG_KEY = "eitangoTodayLog";
 let cards = [];
 let queue = [];
 let currentCard = null;
+let practiceMode = false;
 
 function todayStr() {
   return new Date().toISOString().slice(0,10);
+}
+
+function loadTodayLog() {
+  const raw = localStorage.getItem(TODAY_LOG_KEY);
+  const log = raw ? JSON.parse(raw) : null;
+  if (!log || log.date !== todayStr()) {
+    return { date: todayStr(), ids: [] };
+  }
+  return log;
+}
+
+function recordTodayStudied(id) {
+  const log = loadTodayLog();
+  if (!log.ids.includes(id)) log.ids.push(id);
+  localStorage.setItem(TODAY_LOG_KEY, JSON.stringify(log));
+}
+
+function renderTodayList() {
+  const log = loadTodayLog();
+  const section = document.getElementById("today-section");
+  const todayCards = log.ids.map(id => cards.find(c => c.id === id)).filter(Boolean);
+  if (todayCards.length === 0) {
+    section.style.display = "none";
+    return;
+  }
+  document.getElementById("today-count").textContent = todayCards.length;
+  document.getElementById("today-list").innerHTML = todayCards.map(c =>
+    `<div class="today-word"><span class="en">${c.en}</span><span class="ja">${c.ja}</span></div>`
+  ).join("");
+  section.style.display = "block";
 }
 
 function load() {
@@ -480,7 +548,9 @@ function showNextCard() {
     document.getElementById("study-area").style.display = "none";
     document.getElementById("done-area").style.display = "block";
     document.getElementById("start-btn").style.display = "block";
+    practiceMode = false;
     updateStats();
+    renderTodayList();
     return;
   }
   currentCard = queue.shift();
@@ -514,12 +584,32 @@ function updateCard(card, quality) {
 }
 
 document.getElementById("start-btn").addEventListener("click", () => {
+  practiceMode = false;
+  document.getElementById("practice-banner").style.display = "none";
   buildQueue();
   if (queue.length === 0) {
     updateStats();
+    renderTodayList();
     document.getElementById("done-area").style.display = "block";
     return;
   }
+  document.getElementById("done-area").style.display = "none";
+  document.getElementById("study-area").style.display = "block";
+  document.getElementById("start-btn").style.display = "none";
+  showNextCard();
+});
+
+document.getElementById("repeat-btn").addEventListener("click", () => {
+  const log = loadTodayLog();
+  const todayCards = log.ids.map(id => cards.find(c => c.id === id)).filter(Boolean);
+  if (todayCards.length === 0) return;
+  queue = [...todayCards];
+  for (let i = queue.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [queue[i], queue[j]] = [queue[j], queue[i]];
+  }
+  practiceMode = true;
+  document.getElementById("practice-banner").style.display = "block";
   document.getElementById("done-area").style.display = "none";
   document.getElementById("study-area").style.display = "block";
   document.getElementById("start-btn").style.display = "none";
@@ -537,8 +627,11 @@ document.getElementById("rate-buttons").addEventListener("click", (e) => {
   const btn = e.target.closest("button");
   if (!btn) return;
   const quality = parseInt(btn.dataset.q);
-  updateCard(currentCard, quality);
-  save();
+  if (!practiceMode) {
+    updateCard(currentCard, quality);
+    save();
+    recordTodayStudied(currentCard.id);
+  }
   showNextCard();
 });
 
@@ -597,6 +690,7 @@ function renderWordList() {
 
 load();
 updateStats();
+renderTodayList();
 </script>
 </body>
 </html>
