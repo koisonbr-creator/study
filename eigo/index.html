@@ -165,6 +165,17 @@
   .quiz-choices button:disabled { cursor: default; }
   .quiz-result-date { font-size: 13px; color: #888; margin-bottom: 8px; }
 
+  #quiz-log-section { margin-top: 16px; }
+  .quiz-log-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 14px;
+  }
+  .quiz-log-entry .time { color: #999; }
+  .quiz-log-entry .score { font-weight: bold; color: #2b5fad; }
+
   form.add-form input, form.add-form select {
     width: 100%;
     padding: 10px;
@@ -239,6 +250,10 @@
       <div id="today-list"></div>
       <button class="primary-btn" id="repeat-btn">同じ単語をもう一度復習する</button>
       <button class="primary-btn quiz-btn" id="quiz-btn">この単語で4択クイズに挑戦する</button>
+      <div id="quiz-log-section" style="display:none;">
+        <div class="today-list-title">本日のクイズ結果</div>
+        <div id="quiz-log-list"></div>
+      </div>
     </div>
 
     <div id="quiz-area" style="display:none;">
@@ -479,6 +494,7 @@ const PRESET_WORDS = [
 
 const STORAGE_KEY = "eitangoCards";
 const TODAY_LOG_KEY = "eitangoTodayLog";
+const QUIZ_LOG_KEY = "eitangoQuizLog";
 let cards = [];
 let queue = [];
 let currentCard = null;
@@ -506,6 +522,34 @@ function recordTodayStudied(id) {
   const log = loadTodayLog();
   if (!log.ids.includes(id)) log.ids.push(id);
   localStorage.setItem(TODAY_LOG_KEY, JSON.stringify(log));
+}
+
+function loadQuizLog() {
+  const raw = localStorage.getItem(QUIZ_LOG_KEY);
+  const all = raw ? JSON.parse(raw) : [];
+  return all.filter(e => e.date === todayStr());
+}
+
+function recordQuizResult(score, total) {
+  const raw = localStorage.getItem(QUIZ_LOG_KEY);
+  const all = raw ? JSON.parse(raw) : [];
+  const now = new Date();
+  const time = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+  all.push({ date: todayStr(), time: time, score: score, total: total });
+  localStorage.setItem(QUIZ_LOG_KEY, JSON.stringify(all));
+}
+
+function renderQuizLog() {
+  const entries = loadQuizLog();
+  const section = document.getElementById("quiz-log-section");
+  if (entries.length === 0) {
+    section.style.display = "none";
+    return;
+  }
+  document.getElementById("quiz-log-list").innerHTML = entries.map(e =>
+    `<div class="quiz-log-entry"><span class="time">${e.time}</span><span class="score">${e.total}問中${e.score}問正解</span></div>`
+  ).join("");
+  section.style.display = "block";
 }
 
 function renderTodayList() {
@@ -584,6 +628,7 @@ function showNextCard() {
     practiceMode = false;
     updateStats();
     renderTodayList();
+    renderQuizLog();
     return;
   }
   currentCard = queue.shift();
@@ -623,6 +668,7 @@ document.getElementById("start-btn").addEventListener("click", () => {
   if (queue.length === 0) {
     updateStats();
     renderTodayList();
+    renderQuizLog();
     document.getElementById("done-area").style.display = "block";
     return;
   }
@@ -687,6 +733,7 @@ document.getElementById("quiz-next-btn").addEventListener("click", () => {
   quizIndex++;
   if (quizIndex >= quizQuestions.length) {
     document.getElementById("quiz-area").style.display = "none";
+    recordQuizResult(quizScore, quizQuestions.length);
     const resultEl = document.getElementById("quiz-result");
     resultEl.innerHTML = "<div class='quiz-result-date'>" + formatDateJP(todayStr()) + "</div>" +
       quizQuestions.length + "問中 <b>" + quizScore + "問</b> 正解でした！<br><br>";
@@ -696,6 +743,7 @@ document.getElementById("quiz-next-btn").addEventListener("click", () => {
     backBtn.addEventListener("click", () => {
       resultEl.style.display = "none";
       renderTodayList();
+      renderQuizLog();
     });
     resultEl.appendChild(backBtn);
     resultEl.style.display = "block";
@@ -810,6 +858,7 @@ function renderWordList() {
 load();
 updateStats();
 renderTodayList();
+renderQuizLog();
 </script>
 </body>
 </html>
