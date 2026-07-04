@@ -147,6 +147,22 @@
   }
   .today-word .en { font-weight: bold; }
   .today-word .ja { color: #666; }
+  .quiz-btn { background: #5cb85c; }
+
+  .quiz-progress { font-size: 13px; color: #666; margin-bottom: 8px; text-align: center; }
+  .quiz-choices { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .quiz-choices button {
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .quiz-choices button.correct { background: #eaf7ea; border-color: #5cb85c; color: #2e7d32; }
+  .quiz-choices button.wrong { background: #fdecea; border-color: #d9534f; color: #c62828; }
+  .quiz-choices button:disabled { cursor: default; }
 
   form.add-form input, form.add-form select {
     width: 100%;
@@ -221,7 +237,18 @@
       <div class="today-list-title">本日学習した単語（<span id="today-count">0</span>語）</div>
       <div id="today-list"></div>
       <button class="primary-btn" id="repeat-btn">同じ単語をもう一度復習する</button>
+      <button class="primary-btn quiz-btn" id="quiz-btn">この単語で4択クイズに挑戦する</button>
     </div>
+
+    <div id="quiz-area" style="display:none;">
+      <div class="quiz-progress" id="quiz-progress"></div>
+      <div class="card" id="quiz-card">
+        <div class="word" id="quiz-word"></div>
+      </div>
+      <div class="quiz-choices" id="quiz-choices"></div>
+      <button class="primary-btn" id="quiz-next-btn" style="display:none;">次へ</button>
+    </div>
+    <div id="quiz-result" class="done-message" style="display:none;"></div>
   </div>
 
   <div id="tab-add" class="tab">
@@ -597,6 +624,89 @@ document.getElementById("start-btn").addEventListener("click", () => {
   document.getElementById("study-area").style.display = "block";
   document.getElementById("start-btn").style.display = "none";
   showNextCard();
+});
+
+let quizQuestions = [];
+let quizIndex = 0;
+let quizScore = 0;
+
+function buildQuizQuestions(sourceCards) {
+  return sourceCards.map(c => {
+    const distractorPool = cards.filter(o => o.id !== c.id && o.ja !== c.ja);
+    for (let i = distractorPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [distractorPool[i], distractorPool[j]] = [distractorPool[j], distractorPool[i]];
+    }
+    const distractors = distractorPool.slice(0, 3).map(o => o.ja);
+    const choices = [c.ja, ...distractors];
+    for (let i = choices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [choices[i], choices[j]] = [choices[j], choices[i]];
+    }
+    return { word: c.en, answer: c.ja, choices };
+  });
+}
+
+function showQuizQuestion() {
+  const q = quizQuestions[quizIndex];
+  document.getElementById("quiz-progress").textContent = (quizIndex + 1) + " / " + quizQuestions.length + "問";
+  document.getElementById("quiz-word").textContent = q.word;
+  document.getElementById("quiz-next-btn").style.display = "none";
+  const choicesEl = document.getElementById("quiz-choices");
+  choicesEl.innerHTML = "";
+  q.choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.textContent = choice;
+    btn.addEventListener("click", () => selectQuizAnswer(choice, btn));
+    choicesEl.appendChild(btn);
+  });
+}
+
+function selectQuizAnswer(choice, btn) {
+  const q = quizQuestions[quizIndex];
+  const buttons = document.querySelectorAll("#quiz-choices button");
+  buttons.forEach(b => b.disabled = true);
+  if (choice === q.answer) {
+    btn.classList.add("correct");
+    quizScore++;
+  } else {
+    btn.classList.add("wrong");
+    buttons.forEach(b => { if (b.textContent === q.answer) b.classList.add("correct"); });
+  }
+  document.getElementById("quiz-next-btn").style.display = "block";
+}
+
+document.getElementById("quiz-next-btn").addEventListener("click", () => {
+  quizIndex++;
+  if (quizIndex >= quizQuestions.length) {
+    document.getElementById("quiz-area").style.display = "none";
+    const resultEl = document.getElementById("quiz-result");
+    resultEl.innerHTML = quizQuestions.length + "問中 <b>" + quizScore + "問</b> 正解でした！<br><br>";
+    const backBtn = document.createElement("button");
+    backBtn.className = "primary-btn";
+    backBtn.textContent = "戻る";
+    backBtn.addEventListener("click", () => {
+      resultEl.style.display = "none";
+      renderTodayList();
+    });
+    resultEl.appendChild(backBtn);
+    resultEl.style.display = "block";
+    return;
+  }
+  showQuizQuestion();
+});
+
+document.getElementById("quiz-btn").addEventListener("click", () => {
+  const log = loadTodayLog();
+  const todayCards = log.ids.map(id => cards.find(c => c.id === id)).filter(Boolean);
+  if (todayCards.length === 0) return;
+  quizQuestions = buildQuizQuestions(todayCards);
+  quizIndex = 0;
+  quizScore = 0;
+  document.getElementById("today-section").style.display = "none";
+  document.getElementById("quiz-result").style.display = "none";
+  document.getElementById("quiz-area").style.display = "block";
+  showQuizQuestion();
 });
 
 document.getElementById("repeat-btn").addEventListener("click", () => {
