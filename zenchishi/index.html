@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>前置詞イメージ暗記</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: #f5f7fa;
+    margin: 0;
+    color: #222;
+  }
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+    min-height: 100vh;
+    background: #fff;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+  }
+  h1 {
+    font-size: 20px;
+    text-align: center;
+    margin: 8px 0 16px;
+    color: #2b5fad;
+  }
+  nav {
+    display: flex;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 16px;
+  }
+  nav button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+  }
+  nav button.active {
+    color: #2b5fad;
+    border-bottom: 3px solid #2b5fad;
+    font-weight: bold;
+  }
+  .tab { display: none; }
+  .tab.active { display: block; }
+
+  .progress { font-size: 13px; color: #666; margin-bottom: 8px; text-align: center; }
+
+  .diagram-card {
+    border: 1px solid #eee;
+    border-radius: 14px;
+    padding: 8px;
+    margin-bottom: 12px;
+    background: #fafcff;
+  }
+  .diagram-card svg { width: 100%; height: auto; display: block; }
+
+  .prep-word { font-size: 30px; font-weight: bold; color: #222; text-align: center; }
+  .prep-meaning { font-size: 17px; color: #2b5fad; text-align: center; margin-top: 6px; }
+  .prep-example { font-size: 14px; color: #444; text-align: center; margin-top: 10px; line-height: 1.6; }
+  .prep-example .ja { color: #888; font-size: 13px; }
+
+  .nav-buttons { display: flex; gap: 8px; margin-top: 16px; }
+  .nav-buttons button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: #2b5fad;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .nav-buttons button:disabled { background: #ccc; }
+
+  .jump-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-top: 20px;
+  }
+  .jump-grid button {
+    padding: 8px 2px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .jump-grid button.current { background: #2b5fad; color: #fff; border-color: #2b5fad; }
+
+  .primary-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: #5cb85c;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 16px;
+  }
+
+  .quiz-choices { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .quiz-choices button {
+    padding: 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .quiz-choices button.correct { background: #eaf7ea; border-color: #5cb85c; color: #2e7d32; }
+  .quiz-choices button.wrong { background: #fdecea; border-color: #d9534f; color: #c62828; }
+  .quiz-choices button:disabled { cursor: default; }
+
+  .done-message { text-align: center; padding: 40px 0; color: #2b5fad; font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>前置詞イメージ暗記</h1>
+  <nav>
+    <button class="tab-btn active" data-tab="study">イメージで学ぶ</button>
+    <button class="tab-btn" data-tab="quiz">4択クイズ</button>
+  </nav>
+
+  <div id="tab-study" class="tab active">
+    <div class="progress" id="study-progress"></div>
+    <div class="diagram-card" id="study-diagram"></div>
+    <div class="prep-word" id="study-word"></div>
+    <div class="prep-meaning" id="study-meaning"></div>
+    <div class="prep-example" id="study-example"></div>
+    <div class="nav-buttons">
+      <button id="prev-btn">← 前へ</button>
+      <button id="next-btn">次へ →</button>
+    </div>
+    <div class="jump-grid" id="jump-grid"></div>
+  </div>
+
+  <div id="tab-quiz" class="tab">
+    <div class="progress" id="quiz-progress"></div>
+    <div class="diagram-card" id="quiz-diagram"></div>
+    <div class="quiz-choices" id="quiz-choices"></div>
+    <button class="primary-btn" id="quiz-next-btn" style="display:none;">次へ</button>
+    <div id="quiz-result" class="done-message" style="display:none;"></div>
+    <button class="primary-btn" id="quiz-restart-btn" style="display:none; background:#2b5fad;">もう一度挑戦する</button>
+  </div>
+</div>
+
+<script>
+const BOX = { x: 90, y: 100, w: 120, h: 70 };
+const R = 16;
+
+function svgWrap(inner) {
+  return `<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="#2b5fad"/>
+      </marker>
+    </defs>
+    ${inner}
+  </svg>`;
+}
+function box(x=BOX.x, y=BOX.y, w=BOX.w, h=BOX.h) {
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" fill="#eef3fb" stroke="#2b5fad" stroke-width="2"/>`;
+}
+function ball(cx, cy, opts={}) {
+  return `<circle cx="${cx}" cy="${cy}" r="${opts.r||R}" fill="${opts.fill||'#f0ad4e'}" stroke="#b8860b" stroke-width="2" opacity="${opts.opacity!=null?opts.opacity:1}"/>`;
+}
+function arrow(x1,y1,x2,y2,dashed=false) {
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#2b5fad" stroke-width="3" ${dashed?'stroke-dasharray="6,5"':''} marker-end="url(#arrow)"/>`;
+}
+function curveArrow(x1,y1,x2,y2,cx,cy) {
+  return `<path d="M${x1},${y1} Q${cx},${cy} ${x2},${y2}" fill="none" stroke="#2b5fad" stroke-width="3" marker-end="url(#arrow)"/>`;
+}
+function pin(cx,cy) {
+  return `<path d="M${cx},${cy} c-14,-16 -14,-34 0,-40 c14,6 14,24 0,40 z" fill="#d9534f" stroke="#a94442" stroke-width="1.5"/>
+    <circle cx="${cx}" cy="${cy-24}" r="6" fill="#fff"/>`;
+}
+
+const DIAGRAMS = {
+  in: () => svgWrap(box() + ball(150,135)),
+  on: () => svgWrap(box() + ball(150,84)),
+  under: () => svgWrap(box() + ball(150,186)),
+  over: () => svgWrap(box() + ball(150,45) + curveArrow(70,110,230,110,150,20)),
+  above: () => svgWrap(box() + ball(140,35)),
+  below: () => svgWrap(box() + ball(160,210)),
+  into: () => svgWrap(box() + arrow(20,135,88,135) + ball(105,135,{opacity:0.9})),
+  onto: () => svgWrap(box() + arrow(150,35,150,95) + ball(150,90)),
+  "out of": () => svgWrap(box() + arrow(120,135,35,135) + ball(25,135)),
+  through: () => svgWrap(box() + arrow(15,135,285,135,true)),
+  across: () => svgWrap(`<rect x="70" y="120" width="160" height="30" rx="6" fill="#eef3fb" stroke="#2b5fad" stroke-width="2"/>` + arrow(50,90,250,90)),
+  along: () => svgWrap(`<line x1="20" y1="150" x2="280" y2="150" stroke="#ccc" stroke-width="4"/>` + arrow(30,150,270,150) + ball(60,150,{r:12})),
+  around: () => svgWrap(box() + `<ellipse cx="150" cy="135" rx="95" ry="65" fill="none" stroke="#2b5fad" stroke-width="3" stroke-dasharray="8,6"/>` + `<circle cx="150" cy="70" r="6" fill="#2b5fad"/>`),
+  between: () => svgWrap(`<rect x="30" y="110" width="70" height="50" rx="8" fill="#eef3fb" stroke="#2b5fad" stroke-width="2"/><rect x="200" y="110" width="70" height="50" rx="8" fill="#eef3fb" stroke="#2b5fad" stroke-width="2"/>` + ball(150,135)),
+  among: () => svgWrap(`<rect x="30" y="70" width="55" height="45" rx="8" fill="#eef3fb" stroke="#2b5fad" stroke-width="2"/><rect x="215" y="70" width="55" height="45" rx="8" fill="#eef3fb" stroke="#2b5fad" stroke-width="2"/><rect x="120" y="150" width="55" height="45" rx="8" fill="#eef3fb" stroke="#2b5fad" stroke-width="2"/>` + ball(150,110)),
+  behind: () => svgWrap(ball(195,120,{opacity:0.85}) + box()),
+  "in front of": () => svgWrap(box() + ball(150,192)),
+  "next to": () => svgWrap(box() + ball(236,135)),
+  near: () => svgWrap(box() + ball(268,135)),
+  up: () => svgWrap(box(115,150,70,45) + arrow(150,140,150,35)),
+  down: () => svgWrap(box(115,25,70,45) + arrow(150,80,150,190)),
+  to: () => svgWrap(`<circle cx="40" cy="135" r="10" fill="#fff" stroke="#2b5fad" stroke-width="3"/>` + arrow(56,135,225,135) + box(200,100,80,70)),
+  from: () => svgWrap(box(20,100,80,70) + arrow(105,135,270,135)),
+  at: () => svgWrap(pin(150,150) + `<ellipse cx="150" cy="185" rx="20" ry="5" fill="#ccc"/>`)
+};
+
+const PREPOSITIONS = [
+  { word: "in", meaning: "箱の中（空間の内部）", example: "There is a cat in the box.", exampleJa: "箱の中に猫がいる。" },
+  { word: "on", meaning: "面に接触している（上に乗っている）", example: "The book is on the desk.", exampleJa: "本は机の上にある。" },
+  { word: "under", meaning: "真下に（隠れるように）", example: "The cat is under the table.", exampleJa: "猫はテーブルの下にいる。" },
+  { word: "over", meaning: "上方を覆うように、越えて", example: "The plane flew over the mountain.", exampleJa: "飛行機は山の上を飛んだ。" },
+  { word: "above", meaning: "〜より高い位置（直上とは限らない）", example: "The sun is above the clouds.", exampleJa: "太陽は雲の上にある。" },
+  { word: "below", meaning: "〜より低い位置", example: "The temperature is below zero.", exampleJa: "気温は氷点下だ。" },
+  { word: "into", meaning: "外から中へ（動きを伴う）", example: "She walked into the room.", exampleJa: "彼女は部屋の中へ歩いて入った。" },
+  { word: "onto", meaning: "外から上へ（動きを伴う）", example: "The cat jumped onto the table.", exampleJa: "猫はテーブルの上に飛び乗った。" },
+  { word: "out of", meaning: "中から外へ", example: "He took the key out of his pocket.", exampleJa: "彼はポケットから鍵を取り出した。" },
+  { word: "through", meaning: "内部を通り抜けて", example: "We walked through the tunnel.", exampleJa: "私たちはトンネルを通り抜けた。" },
+  { word: "across", meaning: "横切って（面を渡って）", example: "They walked across the bridge.", exampleJa: "彼らは橋を渡った。" },
+  { word: "along", meaning: "〜に沿って", example: "We walked along the river.", exampleJa: "私たちは川に沿って歩いた。" },
+  { word: "around", meaning: "〜の周りを", example: "The earth moves around the sun.", exampleJa: "地球は太陽の周りを回る。" },
+  { word: "between", meaning: "2つのものの間に", example: "The ball is between the two boxes.", exampleJa: "ボールは2つの箱の間にある。" },
+  { word: "among", meaning: "3つ以上のものの中に", example: "She was among the crowd.", exampleJa: "彼女は群衆の中にいた。" },
+  { word: "behind", meaning: "〜の後ろに", example: "The car is behind the building.", exampleJa: "車はビルの後ろにある。" },
+  { word: "in front of", meaning: "〜の前に", example: "She is standing in front of the door.", exampleJa: "彼女はドアの前に立っている。" },
+  { word: "next to", meaning: "〜のすぐ横に", example: "The chair is next to the table.", exampleJa: "椅子はテーブルのすぐ横にある。" },
+  { word: "near", meaning: "〜の近くに（少し離れて）", example: "The station is near my house.", exampleJa: "駅は私の家の近くにある。" },
+  { word: "up", meaning: "上へ（方向）", example: "He climbed up the hill.", exampleJa: "彼は丘を上った。" },
+  { word: "down", meaning: "下へ（方向）", example: "She ran down the stairs.", exampleJa: "彼女は階段を駆け下りた。" },
+  { word: "to", meaning: "〜へ向かって（到達点）", example: "She went to school.", exampleJa: "彼女は学校へ行った。" },
+  { word: "from", meaning: "〜から（出発点）", example: "He came from Japan.", exampleJa: "彼は日本から来た。" },
+  { word: "at", meaning: "ある一点に（特定の点）", example: "I'll meet you at the station.", exampleJa: "駅で会いましょう。" }
+];
+
+let studyIndex = 0;
+
+function renderStudy() {
+  const p = PREPOSITIONS[studyIndex];
+  document.getElementById("study-progress").textContent = (studyIndex + 1) + " / " + PREPOSITIONS.length;
+  document.getElementById("study-diagram").innerHTML = DIAGRAMS[p.word]();
+  document.getElementById("study-word").textContent = p.word;
+  document.getElementById("study-meaning").textContent = p.meaning;
+  document.getElementById("study-example").innerHTML = p.example + "<br><span class='ja'>" + p.exampleJa + "</span>";
+  document.getElementById("prev-btn").disabled = studyIndex === 0;
+  document.getElementById("next-btn").disabled = studyIndex === PREPOSITIONS.length - 1;
+  document.querySelectorAll("#jump-grid button").forEach((btn, i) => {
+    btn.classList.toggle("current", i === studyIndex);
+  });
+}
+
+function renderJumpGrid() {
+  const grid = document.getElementById("jump-grid");
+  grid.innerHTML = "";
+  PREPOSITIONS.forEach((p, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = p.word;
+    btn.addEventListener("click", () => { studyIndex = i; renderStudy(); });
+    grid.appendChild(btn);
+  });
+}
+
+document.getElementById("prev-btn").addEventListener("click", () => {
+  if (studyIndex > 0) { studyIndex--; renderStudy(); }
+});
+document.getElementById("next-btn").addEventListener("click", () => {
+  if (studyIndex < PREPOSITIONS.length - 1) { studyIndex++; renderStudy(); }
+});
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+  });
+});
+
+let quizOrder = [];
+let quizIndex = 0;
+let quizScore = 0;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startQuiz() {
+  quizOrder = shuffle(PREPOSITIONS);
+  quizIndex = 0;
+  quizScore = 0;
+  document.getElementById("quiz-result").style.display = "none";
+  document.getElementById("quiz-restart-btn").style.display = "none";
+  document.getElementById("quiz-diagram").style.display = "block";
+  document.getElementById("quiz-choices").style.display = "flex";
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  const p = quizOrder[quizIndex];
+  document.getElementById("quiz-progress").textContent = (quizIndex + 1) + " / " + quizOrder.length + "問";
+  document.getElementById("quiz-diagram").innerHTML = DIAGRAMS[p.word]();
+  document.getElementById("quiz-next-btn").style.display = "none";
+  const distractors = shuffle(PREPOSITIONS.filter(o => o.word !== p.word)).slice(0, 3);
+  const choices = shuffle([p, ...distractors]);
+  const choicesEl = document.getElementById("quiz-choices");
+  choicesEl.innerHTML = "";
+  choices.forEach(c => {
+    const btn = document.createElement("button");
+    btn.textContent = c.word;
+    btn.addEventListener("click", () => selectAnswer(c.word, btn, p.word));
+    choicesEl.appendChild(btn);
+  });
+}
+
+function selectAnswer(choice, btn, answer) {
+  const buttons = document.querySelectorAll("#quiz-choices button");
+  buttons.forEach(b => b.disabled = true);
+  if (choice === answer) {
+    btn.classList.add("correct");
+    quizScore++;
+  } else {
+    btn.classList.add("wrong");
+    buttons.forEach(b => { if (b.textContent === answer) b.classList.add("correct"); });
+  }
+  document.getElementById("quiz-next-btn").style.display = "block";
+}
+
+document.getElementById("quiz-next-btn").addEventListener("click", () => {
+  quizIndex++;
+  if (quizIndex >= quizOrder.length) {
+    document.getElementById("quiz-diagram").style.display = "none";
+    document.getElementById("quiz-choices").style.display = "none";
+    document.getElementById("quiz-next-btn").style.display = "none";
+    const resultEl = document.getElementById("quiz-result");
+    resultEl.innerHTML = quizOrder.length + "問中 <b>" + quizScore + "問</b> 正解でした！";
+    resultEl.style.display = "block";
+    document.getElementById("quiz-restart-btn").style.display = "block";
+    return;
+  }
+  showQuizQuestion();
+});
+
+document.getElementById("quiz-restart-btn").addEventListener("click", startQuiz);
+
+document.querySelector('[data-tab="quiz"]').addEventListener("click", () => {
+  if (quizOrder.length === 0) startQuiz();
+});
+
+renderJumpGrid();
+renderStudy();
+</script>
+</body>
+</html>
