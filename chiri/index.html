@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高校地理 中間試験対策</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-light: #818cf8;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warn: #f59e0b;
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    background: var(--primary);
+    color: white;
+    padding: 16px 20px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(79,70,229,0.3);
+  }
+  header h1 { font-size: 1.2rem; font-weight: 700; }
+  header p { font-size: 0.8rem; opacity: 0.8; margin-top: 2px; }
+
+  /* ===== NAV TABS ===== */
+  .tabs {
+    display: flex;
+    background: white;
+    border-bottom: 2px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+  .tab-btn:hover { color: var(--primary); }
+
+  /* ===== MODE SWITCHER ===== */
+  .mode-switch {
+    display: flex;
+    margin: 16px auto;
+    width: calc(100% - 32px);
+    max-width: 600px;
+    background: var(--border);
+    border-radius: 50px;
+    padding: 4px;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 50px;
+    background: transparent;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-btn.active {
+    background: white;
+    color: var(--primary);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+
+  /* ===== MAIN CONTENT ===== */
+  .content {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 16px 32px;
+  }
+
+  /* ===== TOPIC TITLE ===== */
+  .topic-header {
+    text-align: center;
+    margin: 16px 0;
+  }
+  .topic-header h2 {
+    font-size: 1rem;
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .topic-header p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress-wrap {
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ===== FLASHCARD ===== */
+  .flashcard-area {
+    perspective: 1000px;
+    margin: 8px 0;
+  }
+  .flashcard {
+    width: 100%;
+    min-height: 220px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s ease;
+    cursor: pointer;
+  }
+  .flashcard.flipped { transform: rotateY(180deg); }
+  .card-face {
+    position: absolute;
+    width: 100%;
+    min-height: 220px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background: white;
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .card-front { border-top: 4px solid var(--primary); }
+  .card-back {
+    transform: rotateY(180deg);
+    border-top: 4px solid var(--success);
+    background: #f0fdf4;
+  }
+  .card-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .card-front .card-label { color: var(--primary); }
+  .card-back .card-label { color: var(--success); }
+  .card-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .card-back .card-text { font-size: 1.15rem; color: #15803d; }
+  .card-hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 16px;
+  }
+
+  /* ===== FLASHCARD BUTTONS ===== */
+  .fc-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .fc-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .fc-btn:active { transform: scale(0.97); }
+  .fc-btn.prev { background: var(--border); color: var(--muted); }
+  .fc-btn.next { background: var(--primary); color: white; }
+  .fc-btn.flip-btn {
+    background: linear-gradient(135deg, #f0f9ff, #dbeafe);
+    color: var(--primary);
+    border: 1px solid var(--primary-light);
+  }
+
+  /* ===== SUMMARY PANEL ===== */
+  .summary-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-top: 16px;
+  }
+  .summary-card h3 {
+    font-size: 0.9rem;
+    color: var(--primary);
+    margin-bottom: 12px;
+    font-weight: 700;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .summary-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .summary-item:last-child { border-bottom: none; }
+  .summary-q { color: var(--muted); min-width: 100px; font-weight: 600; }
+  .summary-a { color: var(--text); font-weight: 700; }
+
+  /* ===== QUIZ ===== */
+  .quiz-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border-top: 4px solid var(--warn);
+    margin-top: 8px;
+  }
+  .quiz-num {
+    font-size: 0.75rem;
+    color: var(--warn);
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+  }
+  .quiz-q {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .choice-btn {
+    width: 100%;
+    padding: 13px 16px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    background: white;
+    text-align: left;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .choice-btn:hover:not(:disabled) {
+    border-color: var(--primary-light);
+    background: #f5f3ff;
+  }
+  .choice-btn.correct {
+    border-color: var(--success);
+    background: #f0fdf4;
+    color: #15803d;
+  }
+  .choice-btn.wrong {
+    border-color: var(--danger);
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+  .choice-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .choice-btn.correct .choice-num { background: var(--success); color: white; }
+  .choice-btn.wrong .choice-num { background: var(--danger); color: white; }
+
+  /* ===== RESULT PANEL ===== */
+  .result-panel {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: none;
+  }
+  .result-panel.show { display: block; }
+  .result-panel.ok {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+  .result-panel.ng {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+  .result-panel .explain {
+    font-weight: 400;
+    margin-top: 6px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .next-quiz-btn {
+    width: 100%;
+    margin-top: 14px;
+    padding: 13px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+  }
+  .next-quiz-btn.show { display: block; }
+  .next-quiz-btn:active { transform: scale(0.98); }
+
+  /* ===== SCORE ===== */
+  .score-board {
+    background: white;
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    text-align: center;
+    margin-top: 8px;
+  }
+  .score-board h2 { font-size: 1.1rem; margin-bottom: 16px; }
+  .score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+  .score-num { font-size: 2.2rem; line-height: 1; }
+  .score-label { font-size: 0.75rem; margin-top: 4px; }
+  .score-board .msg { font-size: 1rem; font-weight: 600; margin-bottom: 16px; }
+  .retry-btn {
+    padding: 12px 32px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin: 4px;
+  }
+  .retry-btn.outline {
+    background: white;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (min-width: 640px) {
+    .card-text { font-size: 1.2rem; }
+    .fc-controls { gap: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>高校地理 中間試験対策</h1>
+  <p>地球上の位置・時差・国家・日本の領域</p>
+</header>
+
+<div class="tabs" id="topicTabs">
+  <button class="tab-btn active" onclick="setTopic(0)">①地球の姿</button>
+  <button class="tab-btn" onclick="setTopic(1)">②緯度の影響</button>
+  <button class="tab-btn" onclick="setTopic(2)">③時差</button>
+  <button class="tab-btn" onclick="setTopic(3)">④世界の国家</button>
+  <button class="tab-btn" onclick="setTopic(4)">⑤日本の領域</button>
+</div>
+
+<div class="content">
+  <div class="mode-switch">
+    <button class="mode-btn active" onclick="setMode('flash')" id="btnFlash">📇 フラッシュカード</button>
+    <button class="mode-btn" onclick="setMode('quiz')" id="btnQuiz">✏️ クイズ</button>
+    <button class="mode-btn" onclick="setMode('summary')" id="btnSummary">📋 まとめ</button>
+  </div>
+
+  <!-- ========== FLASHCARD MODE ========== -->
+  <div id="flashMode">
+    <div class="topic-header">
+      <h2 id="fcTopicTitle"></h2>
+      <p id="fcTopicSub"></p>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="fcProgress"></div></div>
+      <span class="progress-text" id="fcProgressText"></span>
+    </div>
+    <div class="flashcard-area">
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="card-face card-front">
+          <div class="card-label">問い</div>
+          <div class="card-text" id="fcQuestion"></div>
+          <div class="card-hint">タップして答えを見る</div>
+        </div>
+        <div class="card-face card-back">
+          <div class="card-label">答え</div>
+          <div class="card-text" id="fcAnswer"></div>
+        </div>
+      </div>
+    </div>
+    <div class="fc-controls">
+      <button class="fc-btn prev" onclick="fcPrev()">← 前へ</button>
+      <button class="fc-btn flip-btn" onclick="flipCard()">裏返す</button>
+      <button class="fc-btn next" onclick="fcNext()">次へ →</button>
+    </div>
+  </div>
+
+  <!-- ========== QUIZ MODE ========== -->
+  <div id="quizMode" style="display:none">
+    <div class="topic-header">
+      <h2 id="qzTopicTitle"></h2>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="qzProgress"></div></div>
+      <span class="progress-text" id="qzProgressText"></span>
+    </div>
+
+    <div id="quizBody">
+      <div class="quiz-card">
+        <div class="quiz-num" id="qzNum"></div>
+        <div class="quiz-q" id="qzQuestion"></div>
+        <div class="choices" id="qzChoices"></div>
+      </div>
+      <div class="result-panel" id="qzResult">
+        <div id="qzResultMsg"></div>
+        <div class="explain" id="qzExplain"></div>
+      </div>
+      <button class="next-quiz-btn" id="qzNextBtn" onclick="quizNext()">次の問題 →</button>
+    </div>
+
+    <div id="scoreBoard" style="display:none">
+      <div class="score-board">
+        <h2>クイズ結果</h2>
+        <div class="score-circle" id="scoreCircle">
+          <div class="score-num" id="scoreNum"></div>
+          <div class="score-label">/ <span id="scoreTotal"></span>問</div>
+        </div>
+        <div class="msg" id="scoreMsg"></div>
+        <br>
+        <button class="retry-btn" onclick="retryQuiz()">もう一度挑戦</button>
+        <button class="retry-btn outline" onclick="setMode('flash')">カードで復習</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== SUMMARY MODE ========== -->
+  <div id="summaryMode" style="display:none">
+    <div class="topic-header">
+      <h2 id="smTopicTitle"></h2>
+    </div>
+    <div class="summary-card" id="summaryContent"></div>
+  </div>
+</div>
+
+<script>
+// ============================
+// DATA
+// ============================
+const topics = [
+  {
+    title: "地球の姿・緯度と経度",
+    sub: "教科書 p6",
+    cards: [
+      { q: "地球の表面で海洋が占める割合は約何%？", a: "約71%", explain: "陸地は約29%。海洋の方が圧倒的に多い。" },
+      { q: "陸地の占める割合が最大になる地点はどこ付近？", a: "フランス付近", explain: "ユーラシア大陸・アフリカ・北米が集まるため陸地が多い。" },
+      { q: "海洋の占める割合が最大になる地点はどこ付近？", a: "ニュージーランド沖", explain: "太平洋が広がる南半球側。" },
+      { q: "地球上の絶対的な位置を表す2つの指標は？", a: "緯度と経度", explain: "緯度（南北）と経度（東西）で地球上のあらゆる地点を特定できる。" },
+      { q: "緯度の基準（0度）となる線は？", a: "赤道", explain: "赤道から北を北緯、南を南緯といい、それぞれ90度まで。" },
+      { q: "北緯・南緯はそれぞれ最大何度？", a: "それぞれ90度", explain: "北極点が北緯90°、南極点が南緯90°。" },
+      { q: "経度の基準（0度）となる経線は何と呼ぶ？", a: "本初子午線", explain: "イギリスのグリニッジ天文台（旧）を通る線。" },
+      { q: "本初子午線はどこの国を通る？", a: "イギリス（旧グリニッジ天文台）", explain: "現在も経度0度の基準として世界共通で使われている。" },
+      { q: "経度は東西それぞれ最大何度？", a: "それぞれ180度", explain: "東経180°と西経180°は同じ線（日付変更線付近）。" },
+      { q: "赤道だけが地球を全周できるのはなぜ？", a: "赤道は地球の最大円（大円）だから", explain: "他の緯線は赤道より短く、極点に近づくほど短くなり、極点は点になる。" },
+      { q: "同じ経度の地点を結んだ線を何という？", a: "経線（子午線）", explain: "経線はすべて同じ長さで、北極と南極を結ぶ。" },
+    ],
+    summary: [
+      { q: "海洋の割合", a: "約71%" },
+      { q: "陸地最大地点", a: "フランス付近" },
+      { q: "海洋最大地点", a: "ニュージーランド沖" },
+      { q: "位置の表し方", a: "緯度・経度" },
+      { q: "緯度の基準", a: "赤道（0度）" },
+      { q: "緯度の範囲", a: "南北各90度" },
+      { q: "経度の基準", a: "本初子午線（グリニッジ）" },
+      { q: "経度の範囲", a: "東西各180度" },
+      { q: "赤道の特徴", a: "唯一地球を全周できる緯線" },
+      { q: "経線の特徴", a: "すべて同じ長さ、南北の極を結ぶ" },
+    ]
+  },
+  {
+    title: "緯度の違いとその影響",
+    sub: "教科書 p7",
+    cards: [
+      { q: "地球が自転する軸を何という？また、何度傾いている？", a: "地軸。約23.4度傾いている", explain: "この傾きが季節変化の原因。" },
+      { q: "北半球では太陽はどの方向から見える？", a: "南の方向（南中する）", explain: "赤道より北にいると、太陽は常に南寄りに見える。" },
+      { q: "北半球の建物は何向きが日当たりが良い？", a: "南向き", explain: "太陽が南にあるため、南向きの窓に日光が多く入る。" },
+      { q: "熱帯とはどの緯度範囲？", a: "北緯・南緯約23.4度以内", explain: "一年中太陽が高く、気温が高い地帯。" },
+      { q: "白夜とは何か？", a: "夏に夜になっても太陽が沈まない現象", explain: "高緯度地方（北緯・南緯66.6度以上）で夏に発生。" },
+      { q: "極夜とは何か？", a: "冬に太陽がほとんど昇らない現象", explain: "高緯度地方で冬に発生。白夜と対になる現象。" },
+      { q: "白夜・極夜が起きる緯度は？", a: "北緯・南緯66.6度以上（北極圏・南極圏）", explain: "地軸の傾き（23.4度）と90度の差が66.6度。" },
+      { q: "緯度が変わると何が変化して季節が生じるか？", a: "太陽エネルギーの照射量と昼夜の長さ", explain: "地軸の傾きにより、緯度によって受ける太陽光の量・昼の長さが変わる。" },
+      { q: "熱帯・温帯・寒帯のうち、季節変化が最も明確なのは？", a: "温帯（中緯度地帯）", explain: "熱帯は一年中暑く、寒帯は一年中寒い。温帯は四季がある。" },
+    ],
+    summary: [
+      { q: "地軸の傾き", a: "約23.4度" },
+      { q: "北半球の太陽方向", a: "南（南中）" },
+      { q: "日当たり良い向き（北半球）", a: "南向き" },
+      { q: "熱帯の範囲", a: "北緯・南緯23.4度以内" },
+      { q: "白夜", a: "夏に太陽が沈まない（高緯度）" },
+      { q: "極夜", a: "冬に太陽が昇らない（高緯度）" },
+      { q: "白夜・極夜の発生緯度", a: "66.6度以上（極圏）" },
+      { q: "季節変化の原因", a: "地軸の傾き→照射量・昼夜の長さの変化" },
+    ]
+  },
+  {
+    title: "時差のしくみ・時差と生活",
+    sub: "教科書 p8〜9",
+    cards: [
+      { q: "地球は24時間で何度自転するか？", a: "360度（1回転）", explain: "1日＝24時間＝360度の自転。" },
+      { q: "経度何度で1時間の時差が生じるか？", a: "15度", explain: "360度÷24時間＝15度/時間。" },
+      { q: "世界標準時（GMT）は何の略？", a: "グリニッジ標準時（Greenwich Mean Time）", explain: "本初子午線（経度0度）を基準とした時刻。" },
+      { q: "日本の標準時子午線は東経何度？その都市は？", a: "東経135度（兵庫県明石市）", explain: "東経135度の経線が明石市を通るため選ばれた。" },
+      { q: "日本とイギリス（GMT）の時差は？", a: "9時間（日本が進んでいる）", explain: "東経135度÷15度/時間＝9時間。日本はGMT+9。" },
+      { q: "日付変更線とは何か？どこにあるか？", a: "東西で日付が変わる線。経度180度付近", explain: "この線を西→東に越えると日付が1日戻り、東→西に越えると1日進む。" },
+      { q: "GMTより東の地域は時刻が進む？遅れる？", a: "進む（＋方向）", explain: "日本はGMTより9時間進んでいる（GMT+9）。" },
+      { q: "サマータイムとは何か？", a: "夏期に時計を1時間進める制度", explain: "欧州・北米などで採用。日照時間の長い夏に活動時間を昼間に合わせる。" },
+      { q: "中国はなぜ広大でも1つの標準時を採用しているか？", a: "国内の統一・管理のため", explain: "地理的には複数の時差があるが、政策的に1つの標準時を使用。" },
+      { q: "ロシア・USAなど広大な国は何を採用している？", a: "複数の標準時（時差帯）", explain: "ロシアは約11の時差帯、USAは本土だけで4つの標準時帯がある。" },
+      { q: "東経135度の日本と東経0度のイギリスの時差は？（計算）", a: "135度÷15度＝9時間", explain: "日本が正午（12:00）のとき、ロンドンは午前3時（03:00）。" },
+      { q: "【計算①】ロンドン(GMT)を7日1時に出発し、飛行7時間で東京(GMT+9)に到着した。東京の現地時間は何日何時か？", a: "7日17時", wrong: ["7日10時", "6日16時", "8日2時"], explain: "GMT 1時＋7時間＝GMT 8時 → 東京(GMT+9)は 8＋9＝17時 → 答: 7日17時" },
+      { q: "【計算②】東京(GMT+9)を5日12時に出発し、飛行12時間でロンドン(GMT)に到着した。ロンドンの現地時間は何日何時か？", a: "5日15時", wrong: ["5日21時", "5日12時", "6日3時"], explain: "東京12時＝GMT 3時(12−9＝3) → GMT 3時＋12時間＝GMT 15時 → ロンドン: 5日15時" },
+      { q: "【計算③】ニューヨーク(GMT-5)を3日18時に出発し、飛行14時間で東京(GMT+9)に到着した。東京の現地時間は何日何時か？", a: "4日22時", wrong: ["3日22時", "4日7時", "5日8時"], explain: "NY 18時＝GMT 23時(18＋5＝23) → GMT 23時＋14時間＝4日13時(GMT) → 東京: 13＋9＝22時 → 4日22時" },
+      { q: "【計算④】ロサンゼルス(GMT-8)を10日10時に出発し、飛行10時間で東京(GMT+9)に到着した。東京の現地時間は何日何時か？", a: "11日13時", wrong: ["10日7時", "10日23時", "11日7時"], explain: "LA 10時＝GMT 18時(10＋8＝18) → GMT 18時＋10時間＝11日4時(GMT) → 東京: 4＋9＝13時 → 11日13時" },
+      { q: "【計算⑤】東京(GMT+9)を4日9時に出発し、シドニー(GMT+10)に現地時間4日20時に到着した。飛行時間は何時間か？", a: "10時間", wrong: ["11時間", "9時間", "8時間"], explain: "東京9時＝GMT 0時(9−9＝0) → シドニー20時＝GMT 10時(20−10＝10) → 飛行時間＝10−0＝10時間" },
+      { q: "【計算⑥】ある都市の時刻が東京(GMT+9)より3時間遅い。この都市の標準時子午線は東経何度か？", a: "東経90度", wrong: ["東経45度", "東経120度", "西経90度"], explain: "東京より3時間遅い＝GMT+6 → 標準時子午線: 6×15＝東経90度" },
+    ],
+    summary: [
+      { q: "時差の基本", a: "経度15度＝1時間" },
+      { q: "世界標準時", a: "GMT（グリニッジ標準時）" },
+      { q: "日本の標準時", a: "東経135度（明石市）" },
+      { q: "日本とGMTの時差", a: "9時間（日本が進む）" },
+      { q: "日付変更線", a: "経度180度付近" },
+      { q: "サマータイム", a: "夏期に1時間進める制度（欧米など）" },
+      { q: "中国の標準時", a: "1種類（国内統一）" },
+      { q: "ロシア・USAの標準時", a: "複数の標準時帯を採用" },
+      { q: "計算の手順", a: "①出発地→GMT変換 ②飛行時間を加算 ③到着地→GMT変換" },
+      { q: "計算①（ノート復元）", a: "ロンドン7日1時発→飛行7時間→東京7日17時着" },
+      { q: "計算③", a: "NY(GMT-5)3日18時→飛行14時間→東京4日22時" },
+      { q: "計算⑥（経度→時差）", a: "東京より3時間遅い→GMT+6→東経90度" },
+    ]
+  },
+  {
+    title: "現代世界の国家・国家の領域",
+    sub: "教科書 p28〜29",
+    cards: [
+      { q: "歴史的国境とは？例を挙げよ", a: "山脈・河川・砂漠など地形を利用した国境", explain: "ヒマラヤ山脈、ライン川など自然の障壁が国境になった例が多い。" },
+      { q: "人為的国境とは？多い地域は？", a: "直線状に引かれた国境。アフリカ・北米に多い", explain: "植民地時代に宗主国が経緯度線に沿って引いた国境が多い。" },
+      { q: "国連に加盟している国の数は？（2023年現在）", a: "193か国", explain: "日本は1956年に加盟。" },
+      { q: "国家の三要素とは？", a: "領土・国民（領民）・主権", explain: "この3つを持つ集団が「国家」として認められる。" },
+      { q: "国家の領域を構成する3つは？", a: "領土・領水・領空", explain: "領水＝領海＋内水。領空＝領土・領水の上空。" },
+      { q: "領海は海岸線から何海里？", a: "12海里", explain: "1海里＝約1852m。領海内は沿岸国の主権が及ぶ。" },
+      { q: "EEZとは何か？範囲は？", a: "排他的経済水域。海岸線から200海里以内", explain: "水産・鉱物資源の採取権が沿岸国に認められる。ただし航行は自由。" },
+      { q: "公海とはどのような海域か？", a: "どの国の主権も及ばない海域。航行は自由", explain: "200海里を超えた海域が公海。すべての国が利用できる。" },
+      { q: "接続水域は海岸線から何海里？", a: "24海里", explain: "12〜24海里の範囲。密輸・密入国などの取り締まりができる。" },
+      { q: "植民地から独立した国が多い地域は？", a: "アフリカ・アジア・オセアニア", explain: "20世紀後半（1960年代以降）に多くの国が独立した。" },
+    ],
+    summary: [
+      { q: "歴史的国境", a: "山脈・河川・砂漠などの地形" },
+      { q: "人為的国境", a: "直線状（アフリカ・北米に多い）" },
+      { q: "国連加盟国数", a: "193か国" },
+      { q: "国家の三要素", a: "領土・国民・主権" },
+      { q: "国家の領域", a: "領土・領水・領空" },
+      { q: "領海", a: "海岸線から12海里" },
+      { q: "EEZ", a: "海岸線から200海里（排他的経済水域）" },
+      { q: "公海", a: "主権不及。航行自由" },
+      { q: "接続水域", a: "12〜24海里" },
+    ]
+  },
+  {
+    title: "日本の位置と領域・領土問題",
+    sub: "教科書 p30〜31",
+    cards: [
+      { q: "日本はどの大陸の何側に位置するか？", a: "ユーラシア大陸の東側（太平洋北西部）", explain: "日本海・東シナ海・太平洋に囲まれている。" },
+      { q: "日本の国土面積は世界約何位？", a: "約61位", explain: "面積は約38万km²。大きくも小さくもない中規模の国。" },
+      { q: "日本のEEZは世界何位？", a: "世界約6位", explain: "島国で離島が多いため、EEZが広大。" },
+      { q: "北方領土の島名を4つすべて答えよ", a: "択捉島・国後島・色丹島・歯舞群島", explain: "1945年にソ連に占領された。日本は返還を要求し続けている。" },
+      { q: "北方領土はいつ、どこに占領されたか？", a: "1945年、ソ連（現ロシア）に占領", explain: "日ソ中立条約を破り、終戦直前にソ連が侵攻した。" },
+      { q: "竹島はいつ島根県に編入されたか？", a: "1905年", explain: "古くから日本漁民が利用してきた島。閣議決定により島根県に編入。" },
+      { q: "竹島をめぐって日本が提案していることは？", a: "国際司法裁判所（ICJ）での解決", explain: "韓国は応じていない。韓国は「独島」と呼び実効支配している。" },
+      { q: "尖閣諸島をめぐって中国が主張を始めたのはいつ頃か？", a: "1960年代以降（海底資源発見後）", explain: "1885年以降に日本が調査し日本領と確認。中国は1960年代から主張を始めた。" },
+      { q: "尖閣諸島問題に対応している日本の機関は？", a: "海上保安庁", explain: "中国海警局の船が頻繁に領海侵入を試みているため、海上保安庁が対応している。" },
+      { q: "竹島を実効支配している国はどこ？", a: "韓国（「独島」と呼んでいる）", explain: "1952年に韓国が一方的に「李承晩ライン」を設定して占拠した。" },
+    ],
+    summary: [
+      { q: "日本の位置", a: "ユーラシア大陸東側、太平洋北西部" },
+      { q: "国土面積の順位", a: "世界約61位" },
+      { q: "EEZの順位", a: "世界約6位" },
+      { q: "北方領土の4島", a: "択捉・国後・色丹・歯舞" },
+      { q: "北方領土の現状", a: "1945年ソ連占領→日本が返還要求中" },
+      { q: "竹島", a: "1905年島根県編入→韓国が実効支配（独島）" },
+      { q: "日本のICJ提案", a: "竹島問題で提案→韓国は拒否" },
+      { q: "尖閣諸島", a: "1960年代から中国が主張（海底資源発見後）" },
+    ]
+  }
+];
+
+// ============================
+// STATE
+// ============================
+let currentTopic = 0;
+let currentMode = 'flash';
+let fcIndex = 0;
+let fcFlipped = false;
+let quizOrder = [];
+let quizIndex = 0;
+let quizScore = 0;
+let quizAnswered = false;
+
+// ============================
+// TOPIC & MODE SWITCHING
+// ============================
+function setTopic(idx) {
+  currentTopic = idx;
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === idx);
+  });
+  fcIndex = 0;
+  fcFlipped = false;
+  renderFlashcard();
+  resetQuiz();
+  renderSummary();
+  renderTopicTitles();
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('flashMode').style.display = mode === 'flash' ? '' : 'none';
+  document.getElementById('quizMode').style.display = mode === 'quiz' ? '' : 'none';
+  document.getElementById('summaryMode').style.display = mode === 'summary' ? '' : 'none';
+  document.getElementById('btnFlash').classList.toggle('active', mode === 'flash');
+  document.getElementById('btnQuiz').classList.toggle('active', mode === 'quiz');
+  document.getElementById('btnSummary').classList.toggle('active', mode === 'summary');
+  if (mode === 'quiz') resetQuiz();
+}
+
+function renderTopicTitles() {
+  const t = topics[currentTopic];
+  document.getElementById('fcTopicTitle').textContent = t.title;
+  document.getElementById('fcTopicSub').textContent = t.sub;
+  document.getElementById('qzTopicTitle').textContent = t.title;
+  document.getElementById('smTopicTitle').textContent = t.title;
+}
+
+// ============================
+// FLASHCARD
+// ============================
+function renderFlashcard() {
+  const t = topics[currentTopic];
+  const card = t.cards[fcIndex];
+  document.getElementById('fcQuestion').textContent = card.q;
+  document.getElementById('fcAnswer').textContent = card.a;
+  const pct = ((fcIndex + 1) / t.cards.length * 100).toFixed(0);
+  document.getElementById('fcProgress').style.width = pct + '%';
+  document.getElementById('fcProgressText').textContent = `${fcIndex + 1} / ${t.cards.length}`;
+  const fc = document.getElementById('flashcard');
+  fc.classList.remove('flipped');
+  fcFlipped = false;
+}
+
+function flipCard() {
+  fcFlipped = !fcFlipped;
+  document.getElementById('flashcard').classList.toggle('flipped', fcFlipped);
+}
+
+function fcNext() {
+  const t = topics[currentTopic];
+  fcIndex = (fcIndex + 1) % t.cards.length;
+  renderFlashcard();
+}
+
+function fcPrev() {
+  const t = topics[currentTopic];
+  fcIndex = (fcIndex - 1 + t.cards.length) % t.cards.length;
+  renderFlashcard();
+}
+
+// ============================
+// QUIZ
+// ============================
+function resetQuiz() {
+  const t = topics[currentTopic];
+  quizOrder = shuffle([...Array(t.cards.length).keys()]);
+  quizIndex = 0;
+  quizScore = 0;
+  quizAnswered = false;
+  document.getElementById('quizBody').style.display = '';
+  document.getElementById('scoreBoard').style.display = 'none';
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const t = topics[currentTopic];
+  const cardIdx = quizOrder[quizIndex];
+  const card = t.cards[cardIdx];
+
+  document.getElementById('qzNum').textContent = `問 ${quizIndex + 1} / ${quizOrder.length}`;
+  document.getElementById('qzQuestion').textContent = card.q;
+
+  const pct = (quizIndex / quizOrder.length * 100).toFixed(0);
+  document.getElementById('qzProgress').style.width = pct + '%';
+  document.getElementById('qzProgressText').textContent = `${quizIndex} / ${quizOrder.length} 完了`;
+
+  // 計算問題は専用の不正解を使う、それ以外は他のカードから生成
+  let wrongPool;
+  if (card.wrong) {
+    wrongPool = card.wrong.slice(0, 3);
+  } else {
+    const others = t.cards.filter((_, i) => i !== cardIdx).map(c => c.a);
+    wrongPool = shuffle(others).slice(0, 3);
+  }
+  const allChoices = shuffle([card.a, ...wrongPool]);
+
+  const choicesEl = document.getElementById('qzChoices');
+  choicesEl.innerHTML = '';
+  allChoices.forEach((choice, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = `<span class="choice-num">${i + 1}</span><span>${choice}</span>`;
+    btn.onclick = () => answerQuiz(choice, card.a, card.explain);
+    choicesEl.appendChild(btn);
+  });
+
+  document.getElementById('qzResult').classList.remove('show', 'ok', 'ng');
+  document.getElementById('qzNextBtn').classList.remove('show');
+  quizAnswered = false;
+}
+
+function answerQuiz(selected, correct, explain) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+
+  const isCorrect = selected === correct;
+  if (isCorrect) quizScore++;
+
+  // Style buttons
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(btn => {
+    const text = btn.querySelector('span:last-child').textContent;
+    btn.disabled = true;
+    if (text === correct) btn.classList.add('correct');
+    else if (text === selected && !isCorrect) btn.classList.add('wrong');
+  });
+
+  // Show result
+  const resultEl = document.getElementById('qzResult');
+  const msgEl = document.getElementById('qzResultMsg');
+  const explainEl = document.getElementById('qzExplain');
+  resultEl.classList.add('show', isCorrect ? 'ok' : 'ng');
+  msgEl.textContent = isCorrect ? '✅ 正解！' : `❌ 不正解。正解は「${correct}」`;
+  explainEl.textContent = explain;
+
+  document.getElementById('qzNextBtn').classList.add('show');
+}
+
+function quizNext() {
+  quizIndex++;
+  if (quizIndex >= quizOrder.length) {
+    showScore();
+  } else {
+    renderQuiz();
+  }
+}
+
+function showScore() {
+  document.getElementById('quizBody').style.display = 'none';
+  document.getElementById('scoreBoard').style.display = '';
+
+  const total = quizOrder.length;
+  const pct = Math.round(quizScore / total * 100);
+
+  let color, msg;
+  if (pct === 100) { color = '#22c55e'; msg = '🎉 満点！完璧です！'; }
+  else if (pct >= 80) { color = '#3b82f6'; msg = '👏 よくできました！'; }
+  else if (pct >= 60) { color = '#f59e0b'; msg = '📚 あと少し！復習しよう'; }
+  else { color = '#ef4444'; msg = '💪 もう一度頑張ろう！'; }
+
+  const circle = document.getElementById('scoreCircle');
+  circle.style.background = color + '22';
+  circle.style.border = `4px solid ${color}`;
+  circle.style.color = color;
+  document.getElementById('scoreNum').textContent = quizScore;
+  document.getElementById('scoreTotal').textContent = total;
+  document.getElementById('scoreMsg').textContent = msg;
+}
+
+function retryQuiz() {
+  resetQuiz();
+}
+
+// ============================
+// SUMMARY
+// ============================
+function renderSummary() {
+  const t = topics[currentTopic];
+  const el = document.getElementById('summaryContent');
+  el.innerHTML = `<h3>📌 ${t.title} — 重要ポイント一覧</h3>`;
+  t.summary.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'summary-item';
+    div.innerHTML = `<span class="summary-q">${item.q}</span><span class="summary-a">${item.a}</span>`;
+    el.appendChild(div);
+  });
+}
+
+// ============================
+// UTILS
+// ============================
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ============================
+// INIT
+// ============================
+renderTopicTitles();
+renderFlashcard();
+renderSummary();
+resetQuiz();
+setMode('flash');
+</script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英単語暗記アプリ</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: #f5f7fa;
+    margin: 0;
+    color: #222;
+  }
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+    min-height: 100vh;
+    background: #fff;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+  }
+  h1 {
+    font-size: 20px;
+    text-align: center;
+    margin: 8px 0 16px;
+    color: #2b5fad;
+  }
+  nav {
+    display: flex;
+    border-bottom: 2px solid #eee;
+    margin-bottom: 16px;
+  }
+  nav button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+  }
+  nav button.active {
+    color: #2b5fad;
+    border-bottom: 3px solid #2b5fad;
+    font-weight: bold;
+  }
+  .tab { display: none; }
+  .tab.active { display: block; }
+
+  .stats {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .stat-box {
+    flex: 1;
+    background: #eef3fb;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-box .num { font-size: 22px; font-weight: bold; color: #2b5fad; }
+  .stat-box .label { font-size: 12px; color: #666; margin-top: 4px; }
+
+  .primary-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: #2b5fad;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .primary-btn:disabled { background: #ccc; cursor: default; }
+
+  .card {
+    border: 1px solid #eee;
+    border-radius: 14px;
+    padding: 32px 16px;
+    text-align: center;
+    margin: 16px 0;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .card .word { font-size: 30px; font-weight: bold; color: #222; }
+  .card .meaning { font-size: 20px; color: #2b5fad; margin-top: 16px; }
+  .card .hint { font-size: 12px; color: #aaa; margin-top: 12px; }
+
+  .rate-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .rate-buttons button {
+    padding: 12px 4px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #fff;
+    cursor: pointer;
+  }
+  .rate-again { background: #d9534f; }
+  .rate-hard { background: #f0ad4e; }
+  .rate-good { background: #5cb85c; }
+  .rate-easy { background: #2b5fad; }
+
+  .done-message {
+    text-align: center;
+    padding: 40px 0;
+    color: #2b5fad;
+    font-size: 16px;
+  }
+
+  form.add-form input, form.add-form select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  label { font-size: 13px; color: #666; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 6px 4px; border-bottom: 1px solid #eee; text-align: left; }
+  th { color: #888; font-weight: normal; }
+  .status-new { color: #f0ad4e; }
+  .status-learning { color: #2b5fad; }
+  .status-done { color: #5cb85c; }
+  .del-btn { color: #d9534f; background: none; border: none; cursor: pointer; font-size: 12px; }
+
+  .settings-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #666;
+  }
+  .settings-row input { width: 60px; padding: 4px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>英単語暗記アプリ</h1>
+  <nav>
+    <button class="tab-btn active" data-tab="study">学習</button>
+    <button class="tab-btn" data-tab="add">単語を追加</button>
+    <button class="tab-btn" data-tab="list">単語一覧</button>
+  </nav>
+
+  <div id="tab-study" class="tab active">
+    <div class="stats">
+      <div class="stat-box"><div class="num" id="stat-due">0</div><div class="label">今日の復習</div></div>
+      <div class="stat-box"><div class="num" id="stat-new">0</div><div class="label">新しい単語</div></div>
+      <div class="stat-box"><div class="num" id="stat-total">0</div><div class="label">総単語数</div></div>
+    </div>
+    <div class="settings-row">
+      1日に追加する新規単語の上限:
+      <input type="number" id="new-limit" min="1" max="50" value="5">
+    </div>
+    <button class="primary-btn" id="start-btn">学習を開始する</button>
+
+    <div id="study-area" style="display:none;">
+      <div class="card" id="flash-card">
+        <div class="word" id="card-word"></div>
+        <div class="meaning" id="card-meaning" style="display:none;"></div>
+        <div class="hint" id="card-hint">意味を思い出してから「答えを見る」を押してください</div>
+      </div>
+      <button class="primary-btn" id="reveal-btn">答えを見る</button>
+      <div class="rate-buttons" id="rate-buttons" style="display:none;">
+        <button class="rate-again" data-q="0">もう一度</button>
+        <button class="rate-hard" data-q="3">難しい</button>
+        <button class="rate-good" data-q="4">普通</button>
+        <button class="rate-easy" data-q="5">簡単</button>
+      </div>
+    </div>
+    <div id="done-area" class="done-message" style="display:none;">
+      今日の学習分は終わりです。おつかれさまでした！
+    </div>
+  </div>
+
+  <div id="tab-add" class="tab">
+    <form class="add-form" id="add-form">
+      <label>英単語</label>
+      <input type="text" id="new-en" required>
+      <label>意味（日本語）</label>
+      <input type="text" id="new-ja" required>
+      <button type="submit" class="primary-btn">追加する</button>
+    </form>
+  </div>
+
+  <div id="tab-list" class="tab">
+    <table>
+      <thead><tr><th>単語</th><th>意味</th><th>状態</th><th>次回</th><th></th></tr></thead>
+      <tbody id="word-list-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const PRESET_WORDS = [
+["abandon","捨てる、あきらめる"],["absorb","吸収する"],["accomplish","成し遂げる"],
+["accurate","正確な"],["achieve","達成する"],["acknowledge","認める"],
+["adapt","適応する"],["adequate","十分な"],["adjust","調整する"],
+["advantage","利点"],["afford","〜する余裕がある"],["agriculture","農業"],
+["alter","変える"],["ancient","古代の"],["anxious","心配して"],
+["apparent","明白な"],["appreciate","感謝する、正しく理解する"],["appropriate","適切な"],
+["approximately","およそ"],["assist","手伝う"],["assume","当然だと思う"],
+["attach","取り付ける、添付する"],["attempt","試みる"],["attitude","態度"],
+["attract","引きつける"],["available","利用できる"],["aware","気づいて"],
+["behave","振る舞う"],["beneficial","有益な"],["benefit","利益"],
+["capable","できる、能力がある"],["capacity","収容力、能力"],["category","部門"],
+["challenge","課題、挑戦する"],["circumstance","状況"],["combine","結合する"],
+["commit","委ねる、（罪を）犯す"],["community","地域社会"],["compare","比較する"],
+["compete","競争する"],["complex","複雑な"],["component","構成要素"],
+["conclude","結論を下す"],["conduct","行う"],["confident","自信がある"],
+["conflict","対立"],["consequence","結果"],["consist","成り立つ"],
+["constant","絶え間ない"],["construct","建設する"],["consume","消費する"],
+["contain","含む"],["contribute","貢献する"],["convince","説得する"],
+["cooperate","協力する"],["crucial","決定的な"],["currency","通貨"],
+["decade","10年間"],["decline","減少する"],["define","定義する"]
+];
+
+const STORAGE_KEY = "eitangoCards";
+let cards = [];
+let queue = [];
+let currentCard = null;
+
+function todayStr() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function load() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    cards = JSON.parse(raw);
+  } else {
+    cards = PRESET_WORDS.map((w, i) => makeCard(i, w[0], w[1]));
+    save();
+  }
+}
+
+function makeCard(id, en, ja) {
+  return {
+    id: id,
+    en: en,
+    ja: ja,
+    easeFactor: 2.5,
+    interval: 0,
+    repetitions: 0,
+    dueDate: todayStr(),
+    isNew: true
+  };
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(cards));
+}
+
+function updateStats() {
+  const due = cards.filter(c => !c.isNew && c.dueDate <= todayStr()).length;
+  const brandNew = cards.filter(c => c.isNew).length;
+  document.getElementById("stat-due").textContent = due;
+  document.getElementById("stat-new").textContent = brandNew;
+  document.getElementById("stat-total").textContent = cards.length;
+}
+
+function buildQueue() {
+  const limit = parseInt(document.getElementById("new-limit").value) || 5;
+  const dueCards = cards.filter(c => !c.isNew && c.dueDate <= todayStr());
+  const newCards = cards.filter(c => c.isNew).slice(0, limit);
+  queue = [...dueCards, ...newCards];
+  // shuffle
+  for (let i = queue.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [queue[i], queue[j]] = [queue[j], queue[i]];
+  }
+}
+
+function showNextCard() {
+  if (queue.length === 0) {
+    document.getElementById("study-area").style.display = "none";
+    document.getElementById("done-area").style.display = "block";
+    document.getElementById("start-btn").style.display = "block";
+    updateStats();
+    return;
+  }
+  currentCard = queue.shift();
+  document.getElementById("card-word").textContent = currentCard.en;
+  document.getElementById("card-meaning").style.display = "none";
+  document.getElementById("card-meaning").textContent = currentCard.ja;
+  document.getElementById("card-hint").style.display = "block";
+  document.getElementById("reveal-btn").style.display = "block";
+  document.getElementById("rate-buttons").style.display = "none";
+}
+
+function updateCard(card, quality) {
+  if (quality < 3) {
+    card.repetitions = 0;
+    card.interval = 1;
+  } else {
+    if (card.repetitions === 0) {
+      card.interval = 1;
+    } else if (card.repetitions === 1) {
+      card.interval = 6;
+    } else {
+      card.interval = Math.round(card.interval * card.easeFactor);
+    }
+    card.repetitions += 1;
+  }
+  card.easeFactor = Math.max(1.3, card.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+  card.isNew = false;
+  const due = new Date();
+  due.setDate(due.getDate() + card.interval);
+  card.dueDate = due.toISOString().slice(0,10);
+}
+
+document.getElementById("start-btn").addEventListener("click", () => {
+  buildQueue();
+  if (queue.length === 0) {
+    updateStats();
+    document.getElementById("done-area").style.display = "block";
+    return;
+  }
+  document.getElementById("done-area").style.display = "none";
+  document.getElementById("study-area").style.display = "block";
+  document.getElementById("start-btn").style.display = "none";
+  showNextCard();
+});
+
+document.getElementById("reveal-btn").addEventListener("click", () => {
+  document.getElementById("card-meaning").style.display = "block";
+  document.getElementById("card-hint").style.display = "none";
+  document.getElementById("reveal-btn").style.display = "none";
+  document.getElementById("rate-buttons").style.display = "grid";
+});
+
+document.getElementById("rate-buttons").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  const quality = parseInt(btn.dataset.q);
+  updateCard(currentCard, quality);
+  save();
+  showNextCard();
+});
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    if (btn.dataset.tab === "list") renderWordList();
+  });
+});
+
+document.getElementById("add-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const en = document.getElementById("new-en").value.trim();
+  const ja = document.getElementById("new-ja").value.trim();
+  if (!en || !ja) return;
+  const newId = cards.length ? Math.max(...cards.map(c => c.id)) + 1 : 0;
+  cards.push(makeCard(newId, en, ja));
+  save();
+  updateStats();
+  document.getElementById("new-en").value = "";
+  document.getElementById("new-ja").value = "";
+  alert("「" + en + "」を追加しました。");
+});
+
+function renderWordList() {
+  const body = document.getElementById("word-list-body");
+  body.innerHTML = "";
+  cards.slice().sort((a,b) => a.dueDate.localeCompare(b.dueDate)).forEach(c => {
+    const tr = document.createElement("tr");
+    let statusText, statusClass;
+    if (c.isNew) { statusText = "未学習"; statusClass = "status-new"; }
+    else if (c.interval < 21) { statusText = "学習中"; statusClass = "status-learning"; }
+    else { statusText = "定着"; statusClass = "status-done"; }
+    tr.innerHTML = `
+      <td>${c.en}</td>
+      <td>${c.ja}</td>
+      <td class="${statusClass}">${statusText}</td>
+      <td>${c.isNew ? "-" : c.dueDate}</td>
+      <td><button class="del-btn" data-id="${c.id}">削除</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll(".del-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = parseInt(btn.dataset.id);
+      cards = cards.filter(c => c.id !== id);
+      save();
+      renderWordList();
+      updateStats();
+    });
+  });
+}
+
+load();
+updateStats();
+</script>
+</body>
+</html>

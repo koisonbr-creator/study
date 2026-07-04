@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>勉強アプリ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
+    background: #f1f5f9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  h1 { font-size: 1.3rem; color: #1e293b; margin-bottom: 8px; }
+  p { font-size: 0.85rem; color: #64748b; margin-bottom: 32px; }
+  .cards { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 360px; }
+  a {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.15s;
+  }
+  a:active { transform: scale(0.98); }
+  .icon { font-size: 2.2rem; }
+  .info { text-align: left; }
+  .app-title { font-size: 1rem; font-weight: 700; color: #1e293b; }
+  .app-sub { font-size: 0.78rem; color: #64748b; margin-top: 3px; }
+  .badge {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 99px;
+  }
+  .badge-blue { background: #eff6ff; color: #2563eb; }
+  .badge-green { background: #f0fdf4; color: #16a34a; }
+</style>
+</head>
+<body>
+  <h1>📚 勉強アプリ</h1>
+  <p>学習したい科目を選んでください</p>
+  <div class="cards">
+    <a href="chiri/">
+      <span class="icon">🌍</span>
+      <div class="info">
+        <div class="app-title">高校地理</div>
+        <div class="app-sub">中間試験対策・フラッシュカード＋クイズ</div>
+      </div>
+      <span class="badge badge-blue">地理</span>
+    </a>
+    <a href="eigo/">
+      <span class="icon">📖</span>
+      <div class="info">
+        <div class="app-title">英単語</div>
+        <div class="app-sub">英単語暗記アプリ</div>
+      </div>
+      <span class="badge badge-green">英語</span>
+    </a>
+  </div>
+</body>
+</html>
