@@ -211,7 +211,7 @@
     </div>
     <div class="settings-row">
       1日に追加する新規単語の上限:
-      <input type="number" id="new-limit" min="1" max="50" value="5">
+      <input type="number" id="new-limit" min="1" max="50" value="10">
     </div>
     <button class="primary-btn" id="start-btn">学習を開始する</button>
 
@@ -565,7 +565,7 @@ function updateStats() {
 }
 
 function buildQueue() {
-  const limit = parseInt(document.getElementById("new-limit").value) || 5;
+  const limit = parseInt(document.getElementById("new-limit").value) || 10;
   const dueCards = cards.filter(c => !c.isNew && c.dueDate <= todayStr());
   const newCards = cards.filter(c => c.isNew).slice(0, limit);
   queue = [...dueCards, ...newCards];
