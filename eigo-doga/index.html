@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英文法動画 視聴履歴</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    background: #f5f7fa;
+    margin: 0;
+    color: #222;
+  }
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+    min-height: 100vh;
+    background: #fff;
+    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+  }
+  h1 {
+    font-size: 20px;
+    text-align: center;
+    margin: 8px 0 4px;
+    color: #2b5fad;
+  }
+  .sub {
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 16px;
+  }
+  .back-link {
+    display: inline-block;
+    font-size: 12px;
+    color: #2b5fad;
+    text-decoration: none;
+    margin-bottom: 4px;
+  }
+  .back-link:hover { text-decoration: underline; }
+
+  .stats {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .stat-box {
+    flex: 1;
+    background: #eef3fb;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-box .num { font-size: 22px; font-weight: bold; color: #2b5fad; }
+  .stat-box .label { font-size: 12px; color: #666; margin-top: 4px; }
+
+  .chapter {
+    border: 1px solid #eee;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .chapter-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+  }
+  .chapter-info { flex: 1; min-width: 0; }
+  .chapter-time { font-size: 11px; color: #999; }
+  .chapter-name {
+    font-size: 14px;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .chapter-count { font-size: 11px; color: #666; white-space: nowrap; }
+  .chevron {
+    font-size: 12px;
+    color: #999;
+    transition: transform 0.15s;
+  }
+  .chapter.open .chevron { transform: rotate(180deg); }
+
+  .badge-pill {
+    font-size: 11px;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+  .badge-perfect { background: #eaf7ea; color: #2e7d32; }
+  .badge-ok { background: #eaf1fb; color: #2b5fad; }
+  .badge-soso { background: #fff4e5; color: #b8860b; }
+  .badge-bad { background: #fdecea; color: #c62828; }
+  .badge-none { font-size: 11px; color: #bbb; white-space: nowrap; }
+
+  .chapter-body {
+    padding: 0 12px 12px;
+    display: none;
+  }
+  .chapter.open .chapter-body { display: block; }
+
+  .rate-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .rate-buttons button {
+    padding: 12px 4px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+  }
+  .lv-perfect { background: #5cb85c; }
+  .lv-ok { background: #2b5fad; }
+  .lv-soso { background: #f0ad4e; }
+  .lv-bad { background: #d9534f; }
+
+  .history-list {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 8px;
+  }
+  .history-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 4px 0;
+  }
+  .history-row .date { color: #999; }
+  .history-empty { font-size: 12px; color: #bbb; padding: 4px 0; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <a class="back-link" href="../">← 勉強アプリ一覧</a>
+    <h1>🎬 英文法動画 視聴履歴</h1>
+    <div class="sub">目次をタップして理解度を記録します</div>
+    <div class="stats">
+      <div class="stat-box">
+        <div class="num" id="stat-perfect">0</div>
+        <div class="label">完璧</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="stat-review">0</div>
+        <div class="label">要復習</div>
+      </div>
+    </div>
+    <div id="list"></div>
+  </div>
+
+<script>
+  const STORAGE_KEY = 'eigo-doga-history-v1';
+
+  const chapters = [
+    { t: '00:03:46', n: '第5文型' },
+    { t: '00:06:02', n: '主語' },
+    { t: '00:10:02', n: '動詞' },
+    { t: '00:19:02', n: '自動詞・他動詞' },
+    { t: '00:23:38', n: '目的語' },
+    { t: '00:23:59', n: '補語' },
+    { t: '00:25:29', n: '修飾語' },
+    { t: '00:34:54', n: '第1文型' },
+    { t: '00:39:53', n: '第2文型' },
+    { t: '00:41:06', n: '第3文型' },
+    { t: '00:42:12', n: '第4文型' },
+    { t: '00:55:00', n: '第5文型' },
+    { t: '01:07:15', n: '現在形' },
+    { t: '01:22:59', n: '現在進行形' },
+    { t: '01:33:45', n: '現在完了形' },
+    { t: '01:38:42', n: '現在完了形と現在完了進行形の違い' },
+    { t: '01:52:32', n: '過去完了形・未来完了形' },
+    { t: '01:55:50', n: '未来進行形・未来形' },
+    { t: '01:59:38', n: '受動態' },
+    { t: '02:05:01', n: '可算名詞・不可算名詞' },
+    { t: '02:12:20', n: 'the' },
+    { t: '02:23:04', n: 'it と one の違い' },
+    { t: '02:25:48', n: 'one・the other・another・other・others・the others' },
+    { t: '02:30:38', n: 'will' },
+    { t: '02:34:12', n: 'can' },
+    { t: '02:35:55', n: 'must' },
+    { t: '02:37:24', n: 'have to' },
+    { t: '02:40:40', n: 'will・be going to' },
+    { t: '02:46:12', n: 'may' },
+    { t: '02:48:12', n: 'should' },
+    { t: '02:51:40', n: '仮定法現在' },
+    { t: '02:55:53', n: '仮定法過去・仮定法過去完了' },
+    { t: '03:01:54', n: '不定詞' },
+    { t: '03:17:38', n: '動名詞' },
+    { t: '03:28:42', n: '分詞' },
+    { t: '03:31:22', n: '現在分詞' },
+    { t: '03:33:40', n: '過去分詞' },
+    { t: '03:38:25', n: '分詞構文' },
+    { t: '03:44:05', n: '比較' },
+    { t: '03:48:43', n: '関係代名詞' }
+  ];
+
+  const LEVELS = [
+    { key: 'perfect', label: '完璧' },
+    { key: 'ok', label: 'ほぼOK' },
+    { key: 'soso', label: 'まあまあ' },
+    { key: 'bad', label: 'まだまだ' }
+  ];
+
+  const openSet = new Set();
+
+  function loadData() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  function todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+  }
+
+  function levelLabel(key) {
+    const l = LEVELS.find(l => l.key === key);
+    return l ? l.label : '';
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function render() {
+    const data = loadData();
+    let perfectCount = 0;
+    let reviewCount = 0;
+
+    const list = document.getElementById('list');
+    list.innerHTML = chapters.map(ch => {
+      const records = data[ch.t] || [];
+      const last = records[0];
+      if (last) {
+        if (last.level === 'perfect') perfectCount++;
+        if (last.level === 'soso' || last.level === 'bad') reviewCount++;
+      }
+      const open = openSet.has(ch.t);
+
+      const badge = last
+        ? `<span class="badge-pill badge-${last.level}">${levelLabel(last.level)}</span>`
+        : `<span class="badge-none">未視聴</span>`;
+
+      const rateButtons = LEVELS.map(l =>
+        `<button class="lv-${l.key}" data-t="${ch.t}" data-level="${l.key}">${l.label}</button>`
+      ).join('');
+
+      const historyRows = records.length
+        ? records.map(r => `<div class="history-row"><span class="date">${r.date}</span><span class="badge-pill badge-${r.level}">${levelLabel(r.level)}</span></div>`).join('')
+        : `<div class="history-empty">まだ記録がありません</div>`;
+
+      return `
+        <div class="chapter${open ? ' open' : ''}" data-t="${ch.t}">
+          <div class="chapter-head" data-t="${ch.t}">
+            <div class="chapter-info">
+              <div class="chapter-time">${ch.t}</div>
+              <div class="chapter-name">${escapeHtml(ch.n)}</div>
+            </div>
+            <div class="chapter-count">${records.length}回</div>
+            ${badge}
+            <span class="chevron">▾</span>
+          </div>
+          <div class="chapter-body">
+            <div class="rate-buttons">${rateButtons}</div>
+            <div class="history-list">${historyRows}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    document.getElementById('stat-perfect').textContent = perfectCount;
+    document.getElementById('stat-review').textContent = reviewCount;
+  }
+
+  document.getElementById('list').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-level]');
+    if (btn) {
+      const t = btn.dataset.t;
+      const level = btn.dataset.level;
+      const data = loadData();
+      if (!data[t]) data[t] = [];
+      data[t].unshift({ date: todayStr(), level });
+      saveData(data);
+      render();
+      return;
+    }
+    const head = e.target.closest('.chapter-head');
+    if (head) {
+      const t = head.dataset.t;
+      if (openSet.has(t)) openSet.delete(t);
+      else openSet.add(t);
+      render();
+    }
+  });
+
+  render();
+</script>
+</body>
+</html>
